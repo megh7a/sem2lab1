@@ -3,9 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
+#include <Winsock.h>
 
 void error(const char *msg)
 {
@@ -18,6 +16,10 @@ int main(int argc, char *argv[])
     int sockfd, portno, n;
     struct sockaddr_in serv_addr;
     struct hostent *server;
+    static WSADATA wsaData;
+    int wsaerr = WSAStartup(MAKEWORD(2, 0), &wsaData);
+    if (wsaerr)
+      exit(1);
 
     char buffer[256];
     if (argc < 3) {
@@ -33,13 +35,12 @@ int main(int argc, char *argv[])
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
     }
-    bzero((char *) &serv;_addr, sizeof(serv_addr));
+    bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, 
-         (char *)&serv;_addr.sin_addr.s_addr,
-         server->h_length);
+    bcopy((char *)server->h_addr,(char *)&serv_addr.sin_addr.s_addr,
+    server->h_length);
     serv_addr.sin_port = htons(portno);
-    if (connect(sockfd, (struct sockaddr *) &serv;_addr, sizeof(serv_addr)) < 0) 
+    if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) 
         error("ERROR connecting");
     printf("Please enter the message: ");
     bzero(buffer,256);
@@ -51,7 +52,8 @@ int main(int argc, char *argv[])
     n = read(sockfd, buffer, 255);
     if (n < 0) 
          error("ERROR reading from socket");
-    printf("%s\n", buffer);
+    printf("%s\n", buffer[n]);
     close(sockfd);
+    //WSACleanup();
     return 0;
 }
